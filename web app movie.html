@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Search App</title>
+  <style>
+    body, h1, h2, p {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #fff;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      margin-bottom: 10px;
+    }
+
+    /* Search bar styling */
+    #searchInput {
+      padding: 8px;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 10px;
+      background-color: #e50914;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Style for movie containers */
+    .movies-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      gap: 10px;
+    }
+
+    .movie-container {
+      width: calc(20% - 10px);
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+
+    img {
+      width: 80%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <h1>Movie Search App</h1>
+  
+  <!-- Search bar -->
+  <input type="text" id="searchInput" placeholder="Search for a movie">
+  <button onclick="searchMovies()">Search</button>
+
+  <!-- Display upcoming movies -->
+  <h2>Upcoming Movies</h2>
+  <div id="upcomingMovies" class="movies-container"></div>
+
+  <!-- Display movie information -->
+  <h2>Movie Information</h2>
+  <div id="movieInfo"></div>
+
+  <script>
+    const apiKey = "1bfdbff05c2698dc917dd28c08d41096";
+    const apiUrl = "https://api.themoviedb.org/3";
+    
+    // Function to fetch upcoming movies
+    async function getUpcomingMovies() {
+      const response = await fetch(`${apiUrl}/movie/upcoming?api_key=${apiKey}&language=en-US&page=1`);
+      const data = await response.json();
+      return data.results;
+    }
+
+    // Function to fetch movie details by ID
+    async function getMovieDetails(movieId) {
+      const response = await fetch(`${apiUrl}/movie/${movieId}?api_key=${apiKey}&language=en-US`);
+      const data = await response.json();
+      return data;
+    }
+
+    // Function to fetch similar movies by ID
+    async function getSimilarMovies(movieId) {
+      const response = await fetch(`${apiUrl}/movie/${movieId}/similar?api_key=${apiKey}&language=en-US&page=1`);
+      const data = await response.json();
+      return data.results;
+    }
+
+    // Function to display upcoming movies
+async function displayUpcomingMovies() {
+  const upcomingMovies = await getUpcomingMovies();
+  const upcomingMoviesContainer = document.getElementById("upcomingMovies");
+
+  upcomingMovies.forEach(movie => {
+    const movieElement = document.createElement("div");
+    movieElement.className = "movie-container";
+    movieElement.innerHTML = `
+      <p>${movie.title}</p>
+      <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title} Poster" style="cursor: pointer;">
+    `;
+    
+    // Add a click event listener
+    movieElement.addEventListener("click", () => {
+      showMovieDetails(movie.id);
+    });
+
+    upcomingMoviesContainer.appendChild(movieElement);
+  });
+}
+
+
+    // Function to search for a movie
+    async function searchMovies() {
+      const searchInput = document.getElementById("searchInput").value;
+      const response = await fetch(`${apiUrl}/search/movie?api_key=${apiKey}&query=${searchInput}`);
+      const data = await response.json();
+      const searchResultsContainer = document.getElementById("upcomingMovies");
+
+      // Clear previous search results
+      searchResultsContainer.innerHTML = "";
+
+      data.results.forEach(movie => {
+        const movieElement = document.createElement("div");
+        movieElement.className = "movie-container";
+        movieElement.innerHTML = `
+          <p>${movie.title}</p>
+          <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title} Poster" onclick="showMovieDetails(${movie.id})" style="cursor: pointer;">
+        `;
+        searchResultsContainer.appendChild(movieElement);
+      });
+    }
+
+    // Additional Feature: Display comprehensive information about a movie
+async function displayMovieInformation(movieId) {
+  try {
+    // Fetch movie details
+    const detailsResponse = await fetch(`${apiUrl}/movie/${movieId}?api_key=${apiKey}&language=en-US`);
+    const movieDetails = await detailsResponse.json();
+
+    const movieInfoContainer = document.getElementById("movieInfo");
+
+    // Display basic movie details
+    movieInfoContainer.innerHTML = `
+      <p>Title: ${movieDetails.title}</p>
+      <p>Overview: ${movieDetails.overview}</p>
+      <p>Release Date: ${movieDetails.release_date}</p>
+      <p>Popularity: ${movieDetails.popularity}</p>
+      
+    `;
+  } catch (error) {
+    console.error('Error fetching movie details:', error);
+  }
+}
+
+// Function to show movie details on a new page
+function showMovieDetails(movieId) {
+  window.open(`details.html?movieId=${movieId}`, '_blank');
+}
+
+    // Initial setup
+    displayUpcomingMovies();
+</script>
+
+</body>
+</html>
